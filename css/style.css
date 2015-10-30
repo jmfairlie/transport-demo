@@ -1,0 +1,45 @@
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#static {
+    position:static;
+    height: 100%;
+}
+
+#map {
+    height: 100%;
+    border-left:5px solid gray;
+}
+
+#list {
+    height: 46vh;
+    overflow-y: auto;
+    background-color: #fff;
+    margin-bottom: 0px;
+}
+
+#stop-details {
+    height:50vh;
+    background-color: #ddd;
+    padding: 10px;
+    border-top: 1px solid #ccc;
+}
+
+#overlay {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 10000;
+}
+
+.timetable {
+    width:100%;
+}
+
+.no-padding {
+    padding: 0;
+}
