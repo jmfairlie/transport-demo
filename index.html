@@ -5,29 +5,70 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+  <link href="css/style.css" rel="stylesheet">
+
   <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.3.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-    <link href="css/style.css" rel="stylesheet">
+  <script src="http://ajax.aspnetcdn.com/ajax/knockout/knockout-3.3.0.js"></script>
+
 
   <script type="text/javascript" src="js/main.js"></script>
+  <script type="text/javascript" src="js/ko-stuff.js"></script>
   <script async defer type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA9ST-_SzzBRJxzg_7OaB2XRvp4nNuZahE&callback=initMap&libraries=places,geometry"></script>
 
 </head>
 <body>
 <div id="static">
-  <div class="col-md-4 no-padding">
+  <div class="col-md-4 no-padding left-side">
         <div class="input-group ">
-          <span class="input-group-addon" id="basic-addon1">Filter</span>
-          <input id="search" type="text" class="form-control" placeholder="Stop name or number" aria-describedby="basic-addon1">
+          <span class="input-group-addon glyphicon glyphicon-filter" id="basic-addon1"></span>
+          <input id="search" type="text" class="form-control" placeholder="Stop name or number" aria-describedby="basic-addon1" data-bind="textInput: filter">
         </div>
-        <div class="list-group" id="list">
+        <div class="list-group" id="list" data-bind="foreach: filteredStops, viewportAdjuster: currentStop">
+          <a class="list-group-item" data-bind="attr: { href: url, id: id }, text: fullname, css: {active: isSelected()}, click: $root.selectStop, event: {mouseover: $root.listMouseOver, mouseout: $root.listMouseOut}"></a>
         </div>
-
         <div id="stop-details">
+          <div class="panel panel-default" data-bind="with: stopDetail">
+            <div class="panel-heading input-group no-padding" role="group">
+              <h3 data-bind="text: fullname"></h3>
+              <span class="input-group-btn">
+                <button class="btn btn-default btn-lg glyphicon glyphicon-refresh" type="button" data-bind="click: $root.refreshStop"></button>
+              </span>
+            </div>
+            <div class="panel-body">
+              <p data-bind="text: fulladdress"></p>
+            </div>
+            <div class="padding-10">
+              <table class="table-striped timetable" data-bind="visible: departures.length">
+                <caption>Upcoming Departures</caption>
+                <thead>
+                  <tr>
+                    <th>Line</th>
+                    <th></th>
+                    <th>Destination</th>
+                    <th>Time</th>
+                  </tr>
+                </thead>
+                <tbody id="tablebody" data-bind="foreach: departures">
+                  <tr>
+                    <td data-bind="text: short_id"></td>
+                    <td><img data-bind="transportIcon: type"></td>
+                    <td data-bind="text: destination"></td>
+                    <td data-bind="text: time"></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="alert alert-danger" data-bind="visible: departures.length===0">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                <span>
+                  No departures at this time
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-
   </div>
-  <div class="col-md-8" id="map"></div>
+  <div class="col-md-8 no-padding" id="map"></div>
 </div>
 </body>
 </html>
