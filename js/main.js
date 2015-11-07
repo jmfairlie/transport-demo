@@ -195,8 +195,8 @@ function initMap() {
     model = new StopsViewModel(map);
     ko.applyBindings(model);
 
-    pinga = new slidingPanel("#listblock",0, false, "shadowDown reddish semitransparent");
-    palo = new slidingPanel("#stop-details",0, true, "shadowUp blueish semitransparent");
+    pinga = new slidingPanel("#listblock", false, "shadowDown reddish semitransparent");
+    palo = new slidingPanel("#stop-details", true, "shadowUp blueish semitransparent");
 
     $(window).resize(function(ev) {
         pinga.resize();
