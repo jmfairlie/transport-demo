@@ -3,6 +3,7 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
+    overflow: hidden;
 }
 
 #static {
@@ -19,25 +20,30 @@ html, body {
 }
 
 #list {
-    height: 46vh;
+    height:95%;
     overflow-y: auto;
     background-color: #fff;
     margin-bottom: 0px;
 }
 
 #stop-details {
-    height:50vh;
-    border-top: 1px solid #ccc;
 }
 
 .overlay {
     position: absolute;
-    top: 0px;
-    left: 0px;
-    z-index: 10000;
+    display: none;
+    z-index: 9999;
     opacity:0;
     pointer-events:none;
     background: white url("../img/ajax-loader.gif") no-repeat center center;
+}
+
+.white-loader {
+    opacity: 0;
+    position: absolute;
+    z-index: 10002;
+    background: url("../img/white-loader.gif") no-repeat center center;
+    background-size: contain;
 }
 
 .timetable {
@@ -55,4 +61,48 @@ html, body {
 .gif {
     margin-left:auto;
     margin-right:auto;
+}
+
+
+.whatever {
+    height: 100%;
+    max-width: 450px;
+    margin: 0 auto;
+    background-color: white;
+}
+
+.reddish {
+    background-color: #cc0909;
+}
+
+.blueish {
+    background-color: blue;
+}
+
+.semitransparent {
+    opacity: 0.8;
+    padding:5px;
+}
+
+.shadowDown {
+    -webkit-box-shadow: 0px 9px 5px 0px rgba(0,0,0,0.55);
+    -moz-box-shadow: 0px 9px 5px 0px rgba(0,0,0,0.55);
+    box-shadow: 0px 9px 5px 0px rgba(0,0,0,0.55);
+}
+
+.shadowUp {
+    -webkit-box-shadow: 0px -9px 5px 0px rgba(0,0,0,0.55);
+    -moz-box-shadow: 0px -9px 5px 0px rgba(0,0,0,0.55);
+    box-shadow: 0px -9px 5px 0px rgba(0,0,0,0.55);
+}
+
+.shadowRight {
+    -webkit-box-shadow: 9px 0px 5px 0px rgba(0,0,0,0.55);
+    -moz-box-shadow: 9px 0px 5px 0px rgba(0,0,0,0.55);
+    box-shadow: 9px 0px 5px 0px rgba(0,0,0,0.55);
+}
+
+.headText {
+    color: white;
+    font-size:inherit;
 }

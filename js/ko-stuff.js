@@ -53,6 +53,7 @@ ko.bindingHandlers.viewportAdjuster = {
     }
 };
 
+
 var Stop = function(obj, parent) {
     var c = obj.coords.split(",");
     this.id = obj.code;
@@ -91,6 +92,8 @@ var Stop = function(obj, parent) {
     };
 };
 
+
+//knockout viewmodel
 var StopsViewModel = function(map) {
     var self = this;
     self.mapQuery = null;
@@ -124,9 +127,14 @@ var StopsViewModel = function(map) {
 
     this.lineDetails = {};
 
+    self.stopDetail.subscribe(function(newValue) {
+        palo.setText(newValue.fullname);
+        palo.showLoader(false, function() {palo.toggle();});
+
+    });
+
     //everytime currentStop changes query server
     self.currentStop.subscribe(function(newValue) {
-        self.showLoadAnimation($gif2, $("#stop-details"));
         self.getStopDetails(newValue);
 
         $.each(self.markers, function(key, obj) {
@@ -134,10 +142,14 @@ var StopsViewModel = function(map) {
         });
 
         self.markers[newValue].setIcon("img/busstop_blue.png");
+        palo.showLoader(true);
     });
 
     self.filteredStops.subscribe(function(newValue) {
         self.updateMarkers(newValue);
+        var num = newValue.length;
+        var plural = num==1?"":"s";
+        pinga.setText(num+" stop"+plural+" found");
     });
 
     self.updateMarkers = function(newval) {
@@ -189,6 +201,7 @@ var StopsViewModel = function(map) {
 
     self.selectStop = function(stop) {
         self.currentStop(stop.id);
+        pinga.toggle();
     };
 
     self.refreshStop = function() {
@@ -251,7 +264,7 @@ var StopsViewModel = function(map) {
     };
 
     self.getStopDetails = function(code) {
-        var url = "https://crossorigin.me/http://api.reittiopas.fi/hsl/prod/?user=jmfairlie&pass=12345&request=stop&time_limit=60&code="+code;
+        var url = "https://crossorigin.me/http://api.reittiopas.fi/hsl/prod/?user=jmfairlie&pass=12345&request=stop&time_limit=360&code="+code;
 
         if(self.detailQuery) {
             self.detailQuery.abort();
@@ -269,7 +282,7 @@ var StopsViewModel = function(map) {
             complete: function(jqXHR, textStatus) {
                 console.log(url, textStatus);
                 if(textStatus == "error")
-                    self.hideLoadAnimation($gif2);
+                    palo.showLoader(false);
             }
         });
     };
@@ -294,14 +307,12 @@ var StopsViewModel = function(map) {
                 complete: function(jqXHR, textStatus) {
                     if(textStatus !== 'abort') {
                         console.log(url, textStatus);
-                        self.hideLoadAnimation($gif2);
                         self.stopDetail(new Stop(stop, self));
                     }
                 }
             });
         } else {
             self.stopDetail(new Stop(stop, self));
-            self.hideLoadAnimation($gif2);
         }
     };
 
@@ -320,12 +331,11 @@ var StopsViewModel = function(map) {
         gif.css({top:offset.top, left:offset.left, width:w, height:h});
         //gif.css({top: offset.top + h/2 - gif.width()/2, left:offset.left + w/2 - gif.height()/2});
         gif.show();
-        gif.animate({opacity:0.8},600);
+        gif.animate({opacity:0.7},600);
 
     }
 
     self.hideLoadAnimation = function (gif) {
-        var now = Date.now();
         gif.clearQueue();
         gif.animate({opacity:0}, 'fast', function() {gif.hide();});
     };
