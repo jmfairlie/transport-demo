@@ -276,7 +276,7 @@ var StopsViewModel = function(map) {
             url: url,
             dataType: 'json',
             success: self.loadStopDetails,
-            //don't cache this reuqests cause we need up to date info
+            //don't cache this requests cause we need up to date info
             cache:false,
             timeout: maxtimeout,
             complete: function(jqXHR, textStatus) {
@@ -329,7 +329,6 @@ var StopsViewModel = function(map) {
         var w = node.outerWidth();
         var h = node.height();
         gif.css({top:offset.top, left:offset.left, width:w, height:h});
-        //gif.css({top: offset.top + h/2 - gif.width()/2, left:offset.left + w/2 - gif.height()/2});
         gif.show();
         gif.animate({opacity:0.7},600);
 
