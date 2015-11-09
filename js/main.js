@@ -11,7 +11,7 @@ var alllines = {};
 var stops = {};
 var maxtimeout = 10000;
 var model;
-var pinga, palo;
+var listPanel, stopInfoPanel;
 
 //create the html nodes associated to the map loading gif
 $(document).ready(function() {
@@ -196,11 +196,11 @@ function initMap() {
     model = new StopsViewModel(map);
     ko.applyBindings(model);
 
-    pinga = new slidingPanel("#listblock", false, "shadowDown reddish semitransparent");
-    palo = new slidingPanel("#stop-details", true, "shadowUp blueish semitransparent");
+    listPanel = new slidingPanel("#listblock", false, "shadowDown reddish semitransparent");
+    stopInfoPanel = new slidingPanel("#stop-details", true, "shadowUp blueish semitransparent");
 
     $(window).resize(function(ev) {
-        pinga.resize();
-        palo.resize();
+        listPanel.resize();
+        stopInfoPanel.resize();
     });
 }

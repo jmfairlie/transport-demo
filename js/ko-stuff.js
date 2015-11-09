@@ -130,8 +130,8 @@ var StopsViewModel = function(map) {
     this.lineDetails = {};
 
     self.stopDetail.subscribe(function(newValue) {
-        palo.setText(newValue.fullname);
-        palo.showLoader(false, function() {palo.toggle();});
+        stopInfoPanel.setText(newValue.fullname);
+        stopInfoPanel.showLoader(false, function() {stopInfoPanel.toggle();});
 
     });
 
@@ -144,14 +144,14 @@ var StopsViewModel = function(map) {
         });
 
         self.markers[newValue].setIcon("img/busstop_blue.png");
-        palo.showLoader(true);
+        stopInfoPanel.showLoader(true);
     });
 
     self.filteredStops.subscribe(function(newValue) {
         self.updateMarkers(newValue);
         var num = newValue.length;
         var plural = num==1?"":"s";
-        pinga.setText(num+" stop"+plural+" found");
+        listPanel.setText(num+" stop"+plural+" found");
     });
 
     self.updateMarkers = function(newval) {
@@ -203,7 +203,7 @@ var StopsViewModel = function(map) {
 
     self.selectStop = function(stop) {
         self.currentStop(stop.id);
-        pinga.toggle();
+        listPanel.toggle();
     };
 
     self.refreshStop = function() {
@@ -284,7 +284,7 @@ var StopsViewModel = function(map) {
             complete: function(jqXHR, textStatus) {
                 console.log(url, textStatus);
                 if(textStatus == "error")
-                    palo.showLoader(false);
+                    stopInfoPanel.showLoader(false);
             }
         });
     };
