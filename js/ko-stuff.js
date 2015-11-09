@@ -1,5 +1,7 @@
 
 //custom KO bindings
+
+//automatically choose the right icon according to transport line type(tram, bus, metro, bus)
 ko.bindingHandlers.transportIcon = {
     init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
         // This will be called when the binding is first applied to an element

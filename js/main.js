@@ -13,6 +13,7 @@ var maxtimeout = 10000;
 var model;
 var pinga, palo;
 
+//create the html nodes associated to the map loading gif
 $(document).ready(function() {
     $gif  =$("<div>").addClass("overlay").appendTo("#static");
 });
