@@ -4,7 +4,7 @@ This web app allows you to browse through the Helsinki metro area map and find a
 Instructions
 =============
 1. Clone repo and open index.html in your browser (internet connection required)
-2. Alternatively, you can try the live version at grotes.co/helsinki
+2. Alternatively, you can try the live version by following the link on the description.
 
 
 How to Use
@@ -16,7 +16,7 @@ How to Use
 - The footer will show the name of the selected stop.
 - Clicking on the footer will open up a panel showing the selected stop's specific information.
 
-Acknowledgement
+Acknowledgements
 ================
 * Some icons from : Maps Icons Collection https://mapicons.mapsmarker.com
 * The transit info is retrieved via the publicly available [Reittiopas API](http://developer.reittiopas.fi/pages/fi/http-get-interface-version-2.php?lang=EN)
