@@ -1,14 +1,23 @@
-
-html, body {
+body, html {
     height: 100%;
     margin: 0;
     padding: 0;
     overflow: hidden;
 }
 
+/*prevent text selection in all divs*/
+div {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 #static {
-    position:static;
-    height: 100%;
+    height: 90%;
+    position: relative;
 }
 
 #map {
@@ -24,9 +33,6 @@ html, body {
     overflow-y: auto;
     background-color: #fff;
     margin-bottom: 0px;
-}
-
-#stop-details {
 }
 
 .overlay {
@@ -55,7 +61,7 @@ html, body {
 }
 
 .padding-10 {
-    padding: 10px;
+    padding: 15px;
 }
 
 .gif {
@@ -63,25 +69,34 @@ html, body {
     margin-right:auto;
 }
 
+.border-box {
+    box-sizing: border-box;
+    height: 100%;
+}
 
 .whatever {
-    height: 100%;
+    box-sizing: border-box;
+    height:100%;
+    overflow: hidden;
     max-width: 450px;
     margin: 0 auto;
-    background-color: white;
+    background-color: rgba(255,255,255,0.8);
 }
 
 .reddish {
-    background-color: #cc0909;
+    background-color: #000;
+}
+
+.gray {
+    background-color: #888;
 }
 
 .blueish {
-    background-color: blue;
+    background-color: #000066;
 }
 
 .semitransparent {
     opacity: 0.8;
-    padding:5px;
 }
 
 .shadowDown {
@@ -103,6 +118,48 @@ html, body {
 }
 
 .headText {
+    min-width : 8%;
     color: white;
-    font-size:inherit;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.head-warning {
+    opacity:0;
+    display:none;
+    padding-right:10px;
+    min-width : 8%;
+    color: white;
+    vertical-align: middle;
+    text-align: right;
+    float:right;
+}
+
+#header {
+    box-sizing: border-box;
+    height: 10%;
+    padding: 10px;
+    position: relative;
+    z-index: 10004;
+    background: url("../img/background1.jpg") no-repeat left center;
+    font-size: 4vh;
+    border-bottom: 2px solid red;
+    color: white;
+}
+
+
+.fullscreenbutton {
+    text-align: center;
+    color:white;
+    border-radius: 25%;
+    background-color: rgba(0,0,0, 0.8);
+}
+
+#logo {
+    height:100%;
+    margin-right: 5px;
+}
+
+.padding-on-top {
+    padding-top: 25px;
 }

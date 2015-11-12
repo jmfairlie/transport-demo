@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
   <link href="css/style.css" rel="stylesheet">
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
   <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.3.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
   <script src="http://ajax.aspnetcdn.com/ajax/knockout/knockout-3.3.0.js"></script>
@@ -18,16 +19,17 @@
 
 </head>
 <body>
+  <div id="header"><img id="logo" src="img/hsl_logo.png">Helsinki Transit Browser</div>
   <div id="static">
-    <div class="col-md-12 no-padding" id="map"></div>
+    <div id="map"></div>
   </div>
-  <div id="listblock" class="whatever">
-        <div class="input-group ">
+  <div id="listblock" class="whatever padding-on-top">
+        <div class="input-group">
           <span class="input-group-addon glyphicon glyphicon-filter" id="basic-addon1"></span>
-          <input id="search" type="text" class="form-control" placeholder="Stop name or number" aria-describedby="basic-addon1" data-bind="textInput: filter" autocomplete="off">
+          <input id="search" type="text" class="form-control" placeholder="Stop name or number" aria-describedby="basic-addon1" data-bind="textInput: filter, click: function(data, event) {}, clickBubble:false" autocomplete="off">
         </div>
         <div class="list-group" id="list" data-bind="foreach: filteredStops, viewportAdjuster: currentStop">
-          <a class="list-group-item" data-bind="attr: { href: url, id: id }, text: fullname, css: {active: isSelected()}, click: $root.selectStop, event: {mouseover: $root.listMouseOver, mouseout: $root.listMouseOut}"></a>
+          <a class="list-group-item" data-bind="attr: { href: url, id: id }, text: fullname, css: {active: isSelected()}, click: $root.selectStop, clickBubble:false, event: {mouseover: $root.listMouseOver, mouseout: $root.listMouseOut}"></a>
         </div>
   </div>
 

@@ -18,6 +18,7 @@ ko.bindingHandlers.transportIcon = {
             case 3:
             case 4:
             case 5:
+            case 8:
                 iconurl = "img/bus.png";
                 break;
             case 2:
@@ -41,15 +42,17 @@ ko.bindingHandlers.viewportAdjuster = {
     },
     update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
         var $e = $(element);
-        var $selected = $e.find("#"+ko.unwrap(valueAccessor()));
-        var offset = 0;
-        if($selected.length) {
-            var top = $selected.position().top - 34;
-            //if the item is not visible
-            if(top  > $e.height() || top < 0)
-            {
-                offset = Math.max(0, top + $e.scrollTop() - $e.height()/2 + $selected.outerHeight()/2);
-                $e.animate({scrollTop: offset});
+        if(ko.unwrap(valueAccessor()).length) {
+            var $selected = $e.find("#"+ko.unwrap(valueAccessor()));
+            var offset = 0;
+            if($selected.length) {
+                var top = $selected.position().top - 34;
+                //if the item is not visible
+                if(top  > $e.height() || top < 0)
+                {
+                    offset = Math.max(0, top + $e.scrollTop() - $e.height()/2 + $selected.outerHeight()/2);
+                    $e.animate({scrollTop: offset});
+                }
             }
         }
     }
@@ -57,7 +60,7 @@ ko.bindingHandlers.viewportAdjuster = {
 
 
 var Stop = function(obj, parent) {
-    var c = obj.coords.split(",");
+    var c = (obj.wgs_coords || obj.coords).split(",");
     this.id = obj.code;
     this.codeShort = obj.code_short || obj.codeShort || "n/a";
     this.name = obj.short_name || obj.name_fi || obj.name;
@@ -111,7 +114,7 @@ var StopsViewModel = function(map) {
     self.markers = {};
     self.stopDetail = ko.observable();
     self.lines = ko.observable();
-    self.currentStop = ko.observable();
+    self.currentStop = ko.observable("");
     self.stops =  ko.observableArray([]);
 
     self.filter = ko.observable("");
@@ -130,26 +133,49 @@ var StopsViewModel = function(map) {
     this.lineDetails = {};
 
     self.stopDetail.subscribe(function(newValue) {
-        stopInfoPanel.setText(newValue.fullname);
-        stopInfoPanel.showLoader(false, function() {stopInfoPanel.toggle();});
-
+        if(newValue) {
+            stopInfoPanel.setText(newValue.fullname);
+            stopInfoPanel.showLoader(false, function() {
+                stopInfoPanel.showWarning(false);
+                stopInfoPanel.enableToggleButton(true);
+                stopInfoPanel.toggle();
+            });
+        }
+        else {
+            stopInfoPanel.enableToggleButton(false);
+            stopInfoPanel.showHead(false, function() {
+                stopInfoPanel.setText("");
+            });
+        }
     });
 
     //everytime currentStop changes query server
     self.currentStop.subscribe(function(newValue) {
-        self.getStopDetails(newValue);
+        if(newValue.length) {
+            self.getStopDetails(newValue);
 
-        $.each(self.markers, function(key, obj) {
-            obj.setIcon("img/busstop_red.png");
-        });
+            $.each(self.markers, function(key, obj) {
+                obj.setIcon("img/busstop_red.png");
+            });
 
-        self.markers[newValue].setIcon("img/busstop_blue.png");
-        stopInfoPanel.showLoader(true);
+            self.markers[newValue].setIcon("img/busstop_blue.png");
+
+            stopInfoPanel.showHead(true, function() {
+                stopInfoPanel.showLoader(true);
+            });
+        }
     });
 
     self.filteredStops.subscribe(function(newValue) {
-        self.updateMarkers(newValue);
         var num = newValue.length;
+        if(num > 0) {
+            listPanel.enableToggleButton(true);
+        }
+        else {
+            listPanel.enableToggleButton(false);
+        }
+
+        self.updateMarkers(newValue);
         var plural = num==1?"":"s";
         listPanel.setText(num+" stop"+plural+" found");
     });
@@ -178,10 +204,12 @@ var StopsViewModel = function(map) {
 
         self.markers[stop.id] = marker;
 
-        google.maps.event.addListener(marker, 'mouseover', function() {
-            self.infoWindow.setContent(self.createMarkerContent(stop).html());
-            self.infoWindow.open(self.map, marker);
-        });
+        if(!isTouchDevice) {
+            google.maps.event.addListener(marker, 'mouseover', function() {
+                self.infoWindow.setContent(self.createMarkerContent(stop).html());
+                self.infoWindow.open(self.map, marker);
+            });
+        }
 
         google.maps.event.addListener(marker, 'mouseout', function() {
             self.infoWindow.close();
@@ -207,23 +235,22 @@ var StopsViewModel = function(map) {
     };
 
     self.refreshStop = function() {
-        console.log("refresh stop");
         self.currentStop.valueHasMutated();
     };
 
     self.loadStops = function(data) {
         var coords, c, val;
-
+        var bounds = map.getBounds();
         var temp = $.map(data, function(obj) {
             val = null;
             var c = obj.coords.split(",");
             coords = new google.maps.LatLng(parseFloat(c[1]), parseFloat(c[0]));
-            if(map.getBounds().contains(coords)) {
+            if(bounds.contains(coords)) {
                 val = new Stop(obj, self);
             }
             return val;
         });
-
+        listPanel.showWarning(false);
         self.stops(temp.sort(self.sort));
     };
 
@@ -232,7 +259,7 @@ var StopsViewModel = function(map) {
         var bounds = map.getBounds();
         //using CORS proxy to avoid CORS issues.
         var distance = Math.floor(google.maps.geometry.spherical.computeDistanceBetween(bounds.getSouthWest(), bounds.getNorthEast()));
-        var url = "https://crossorigin.me/http://api.reittiopas.fi/hsl/prod/?user=jmfairlie&pass=12345&request=stops_area&epsg_in=wgs84&epsg_out=wgs84&diameter="+distance+"&limit=2000&center_coordinate=" + center.lng() +","+center.lat();
+        var url = cors_proxy + "http://api.reittiopas.fi/hsl/prod/?user=jmfairlie&pass=12345&request=stops_area&epsg_in=wgs84&epsg_out=wgs84&diameter="+distance+"&limit=2000&center_coordinate=" + center.lng() +","+center.lat();
 
         if(self.mapQuery)
             self.mapQuery.abort();
@@ -244,9 +271,17 @@ var StopsViewModel = function(map) {
             timeout: maxtimeout,
             complete: function(jqXHR, textStatus) {
                 self.hideLoadAnimation($gif);
-                console.log(url, textStatus);
+                if(textStatus != 'success' && textStatus != 'abort') {
+                    listPanel.showWarning(true, textStatus);
+                }
             }
         });
+
+        //deselect stop if it's not within bounds
+        if(self.stopDetail() && !(bounds.contains(self.stopDetail().latlng))) {
+            self.currentStop("");
+            self.stopDetail(null);
+        }
     };
 
     self.loadStopDetails = function(datos) {
@@ -266,7 +301,7 @@ var StopsViewModel = function(map) {
     };
 
     self.getStopDetails = function(code) {
-        var url = "https://crossorigin.me/http://api.reittiopas.fi/hsl/prod/?user=jmfairlie&pass=12345&request=stop&time_limit=360&code="+code;
+        var url = cors_proxy + "http://api.reittiopas.fi/hsl/prod/?user=jmfairlie&pass=12345&request=stop&time_limit=360&code="+code;
 
         if(self.detailQuery) {
             self.detailQuery.abort();
@@ -282,9 +317,10 @@ var StopsViewModel = function(map) {
             cache:false,
             timeout: maxtimeout,
             complete: function(jqXHR, textStatus) {
-                console.log(url, textStatus);
-                if(textStatus == "error")
+                if(textStatus != "success" && textStatus != 'abort') {
+                    stopInfoPanel.showWarning(true, textStatus);
                     stopInfoPanel.showLoader(false);
+                }
             }
         });
     };
@@ -298,7 +334,7 @@ var StopsViewModel = function(map) {
 
     self.getLines = function(line_ids, stop) {
         if(line_ids.length) {
-            var url = "https://crossorigin.me/http://api.reittiopas.fi/hsl/prod/?user=jmfairlie&pass=12345&request=lines&query="+line_ids;
+            var url = cors_proxy + "http://api.reittiopas.fi/hsl/prod/?user=jmfairlie&pass=12345&request=lines&query="+line_ids;
             self.lineQuery = $.ajax({
                 url: url,
                 dataType: 'json',
@@ -307,9 +343,11 @@ var StopsViewModel = function(map) {
                 },
                 timeout: maxtimeout,
                 complete: function(jqXHR, textStatus) {
-                    if(textStatus !== 'abort') {
-                        console.log(url, textStatus);
+                    if(textStatus == 'success') {
                         self.stopDetail(new Stop(stop, self));
+                    } else if(textStatus != 'abort') {
+                        stopInfoPanel.showWarning(true, textStatus);
+                        stopInfoPanel.showLoader(false);
                     }
                 }
             });
@@ -319,11 +357,13 @@ var StopsViewModel = function(map) {
     };
 
     self.listMouseOver = function(stop) {
-        self.markers[stop.id].setAnimation(google.maps.Animation.BOUNCE);
+        if(isTouchDevice)
+            self.markers[stop.id].setAnimation(google.maps.Animation.BOUNCE);
     };
 
     self.listMouseOut = function(stop) {
-        self.markers[stop.id].setAnimation(null);
+        if(isTouchDevice)
+            self.markers[stop.id].setAnimation(null);
     };
 
     self.showLoadAnimation = function(gif, node) {
