@@ -1,4 +1,14 @@
 
+/*
+ * if you plan to run this on your own server
+ * create your own reittiopas account at
+ * http://developer.reittiopas.fi/pages/en/account-request.php
+ * and replace with your own hash
+ */
+
+var hash = "da97842a3c96e80f939e87ee1d7c564378c7906ef241"
+
+var api_base = "https://api.reittiopas.fi/hsl/prod/?userhash="+hash;
 //custom KO bindings
 
 //automatically choose the right icon according to transport line type(tram, bus, metro, bus)
@@ -259,7 +269,7 @@ var StopsViewModel = function(map) {
         var bounds = map.getBounds();
         //using CORS proxy to avoid CORS issues.
         var distance = Math.floor(google.maps.geometry.spherical.computeDistanceBetween(bounds.getSouthWest(), bounds.getNorthEast()));
-        var url = cors_proxy + "http://api.reittiopas.fi/hsl/prod/?user=jmfairlie&pass=12345&request=stops_area&epsg_in=wgs84&epsg_out=wgs84&diameter="+distance+"&limit=2000&center_coordinate=" + center.lng() +","+center.lat();
+        var url = cors_proxy + api_base+"&request=stops_area&epsg_in=wgs84&epsg_out=wgs84&diameter="+distance+"&limit=2000&center_coordinate=" + center.lng() +","+center.lat();
 
         if(self.mapQuery)
             self.mapQuery.abort();
@@ -301,7 +311,7 @@ var StopsViewModel = function(map) {
     };
 
     self.getStopDetails = function(code) {
-        var url = cors_proxy + "http://api.reittiopas.fi/hsl/prod/?user=jmfairlie&pass=12345&request=stop&time_limit=360&code="+code;
+        var url = cors_proxy + api_base + "&request=stop&time_limit=360&code="+code;
 
         if(self.detailQuery) {
             self.detailQuery.abort();
@@ -334,7 +344,7 @@ var StopsViewModel = function(map) {
 
     self.getLines = function(line_ids, stop) {
         if(line_ids.length) {
-            var url = cors_proxy + "http://api.reittiopas.fi/hsl/prod/?user=jmfairlie&pass=12345&request=lines&query="+line_ids;
+            var url = cors_proxy + api_base + "&request=lines&query="+line_ids;
             self.lineQuery = $.ajax({
                 url: url,
                 dataType: 'json',

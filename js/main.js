@@ -16,7 +16,10 @@ var listPanel, stopInfoPanel;
 var button;
 var oldw, oldh;
 var isTouchDevice;
-var cors_proxy = "https://crossorigin.me/";
+
+//if loading file directly use cors proxy
+var fromfile = window.location.protocol==="file:";
+var cors_proxy = fromfile?"https://crossorigin.me/":"";
 
 $(document).ready(function() {
     isTouchDevice = Modernizr.touch;
