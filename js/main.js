@@ -10,7 +10,7 @@ var $gif;
 var alllines = {};
 var stops = {};
 //ajax timeout
-var maxtimeout = 10000;
+var maxtimeout = 20000;
 var model;
 var listPanel, stopInfoPanel;
 var button;
@@ -24,9 +24,13 @@ var cors_proxy = fromfile?"https://crossorigin.me/":"";
 $(document).ready(function() {
     isTouchDevice = Modernizr.touch;
 //create the html nodes associated to the map loading gif
-    $gif  =$("<div>").addClass("overlay").appendTo("#static");
+    $gif  =$("<div>").addClass("overlay").append($("<span>").addClass("fa fa-spinner fa-pulse")).appendTo("#static");
 //create sliding panels
-    listPanel = new slidingPanel("#listblock", false, "shadowDown reddish semitransparent", "#static", false);
+    listPanel = new slidingPanel("#listblock", false, "shadowDown reddish semitransparent", "#static", false, function(e) {
+        model.filter("");
+        //$("#listblock #search").val("");
+        e.stopPropagation();
+    });
     stopInfoPanel = new slidingPanel("#stop-details", true, "shadowUp blueish semitransparent", "#static", true);
     button = new fullscreenButton("#static", function(fullscreen) {
         if(fullscreen) {
@@ -69,22 +73,8 @@ var fullscreenButton = function(container, callback) {
         self.toggle();
     });
 
-    if(!isTouchDevice) {
-        this.button.mouseover(function() {
-            self.span.stop(true, false);
-            self.span.animate({'font-size': self.dimension*2/3}, 'fast');
-            self.span.css({'text-shadow': '0 0 20px #fffa98'});
-
-        });
-
-        this.button.mouseout(function() {
-            self.span.stop(true, false);
-            self.span.animate({'font-size': self.dimension*2/4}, 'fast');
-            self.span.css({'text-shadow': 'none'});
-        });
-    }
-    else {
-        this.span.css({'text-shadow': '0 0 20px #fffa98'});
+    if(isTouchDevice) {
+        this.button.addClass("fullscreenbutton-touch")
     }
 };
 
@@ -92,8 +82,8 @@ fullscreenButton.prototype.resize = function() {
 
     this.dimension = this.container.height()/10;
 
-    this.span.css('font-size', this.dimension*2/4);
-    this.span.css('line-height', this.dimension + "px");
+    this.button.css('font-size', this.dimension*2/4);
+    this.button.css('line-height', this.dimension + "px");
 
     this.button.offset({
         top: this.container.offset().top + this.dimension*1.5,
@@ -144,7 +134,7 @@ fullscreenButton.prototype.toggleFullScreen = function() {
  * Class that handles the sliding content
  *
  */
- var slidingPanel = function(content, down, headerClass, anchor, hidden) {
+ var slidingPanel = function(content, down, headerClass, anchor, hidden, clearFilterCB) {
     this.down = down;
     this.headOpacity = 1;
     this.bodyOpacity = 0.6;
@@ -160,22 +150,26 @@ fullscreenButton.prototype.toggleFullScreen = function() {
 
     var direction = down?"up":"down";
 
-    this.$button = $("<span>").addClass("glyphicon glyphicon-collapse-" + direction+ " headText").css({color: 'darkgray'});
+    this.$button = $("<span class='panel-button disabled'>").addClass("glyphicon glyphicon-collapse-" + direction+ " headText");
     this.$headText =  $("<span>").addClass("headText");
     this.$warning = $("<span>").addClass("head-warning glyphicon glyphicon-exclamation-sign");
+
+    var $remove = $("<span title='remove filter'>").addClass("glyphicon glyphicon-remove remove");
+    this.$filter = $("<span class='filter-text'>");
+    this.$clearFilter = $("<span class='filter-container'>").append(this.$filter, $remove);
 
     var headStyle = {
         'vertical-align': 'middle',
         position: 'relative'
     };
 
-    this.$head = $("<div>").css(headStyle).append(this.$button, this.$headText, this.$warning);
+    this.$head = $("<div class='panel-head'>").css(headStyle).append(this.$button, this.$headText, this.$warning, this.$clearFilter);
 
     this.$head.addClass(headerClass);
     this.$body.css({background: "rgba(0,0,0,"+ this.bodyOpacity+") url('img/dot.png')"});
     this.$content = $(content).addClass("shadowRight");
 
-    this.$loader = $("<div>").addClass("white-loader").appendTo(this.$head).hide();
+    this.$loader = $("<div>").addClass("white-loader").append($("<span>").addClass("fa fa-refresh fa-spin")).appendTo(this.$head).hide();
 
     if(down) {
         this.$container.append(this.$head, this.$body);
@@ -188,48 +182,31 @@ fullscreenButton.prototype.toggleFullScreen = function() {
     this.resize();
 
     var self = this;
-    this.$head.click(function() {
+    var togglefunc = function() {
         if(!self.hidden && self.toggable) {
             self.toggle();
         }
-    });
+    }
 
     this.$body.click(function() {
         self.toggle();
     });
 
-    if(!isTouchDevice) {
-        this.$head.mouseover(function() {
-            if(self.toggable) {
-                self.$button.stop(true, false);
-                self.$button.animate({'font-size': self.headHeight*2/3}, 'fast');
-                self.$button.css({'text-shadow': '0 0 20px #fffa98'});
-            }
-        });
-
-        this.$head.mouseout(function() {
-            if(self.toggable) {
-                self.$button.stop(true, false);
-                self.$button.animate({'font-size': self.headHeight/2}, 'fast');
-                self.$button.css({'text-shadow': 'none'});
-            }
-        });
+    if(clearFilterCB) {
+        this.$clearFilter.click(clearFilterCB);
     }
-    else {
-        this.$button.css({'text-shadow': '0 0 20px #fffa98'});
+
+    if(isTouchDevice) {
+        this.$button.addClass("panel-button-touch");
+        this.$head.click(togglefunc);
+    } else {
+        this.$button.click(togglefunc);
     }
 };
 
 slidingPanel.prototype.enableToggleButton = function(enable) {
     this.toggable = enable;
-    var buttonStyle;
-    if(this.toggable) {
-        buttonStyle = {color:'white'};
-
-    } else {
-        buttonStyle = {color:'#222'};
-    }
-    this.$button.css(buttonStyle);
+    this.$button.toggleClass("disabled", !enable);
 }
 
 slidingPanel.prototype.showHead = function(show, callback) {
@@ -262,7 +239,7 @@ slidingPanel.prototype.toggle = function() {
     if(!this.open) {
         this.$content.show();
         this.headOpacity = this.$head.css("opacity");
-        this.$head.css({opacity:1});
+        this.$head.removeClass("semitransparent");
     }
 
     this.$container.css({'z-index':10001});
@@ -280,7 +257,7 @@ slidingPanel.prototype.toggle = function() {
             add = !self.down?"down":"up";
             remove = !self.down?"up":"down";
             self.$content.hide();
-            self.$head.css({opacity:self.headOpacity});
+            self.$head.addClass("semitransparent");
         }
         else {
             add =  !self.down?"up":"down";
@@ -314,6 +291,12 @@ slidingPanel.prototype.resize = function() {
         'vertical-align': 'middle'
     }
 
+    var filterStyle = {
+        'line-height': this.headHeight + "px",
+        'font-size': this.headHeight/4 + "px",
+        'vertical-align': 'middle'
+    }
+
 
     this.$container.css({top: this.open?this.endTop+"px":this.startTop+"px"});
     this.$container.height(this.winHeight);
@@ -323,6 +306,7 @@ slidingPanel.prototype.resize = function() {
     this.$button.css(buttonStyle);
     this.$headText.css(textStyle);
     this.$warning.css(buttonStyle);
+    this.$clearFilter.css(filterStyle);
 
     this.$loader.css({top: 0, left: 0, height:this.headHeight, width: this.$container.width()});
 };
@@ -331,25 +315,14 @@ slidingPanel.prototype.resize = function() {
 //show/hide loader on top of panel head
 slidingPanel.prototype.showLoader = function(show, callback) {
     if(show) {
-        this.$loader.show();
-        this.$loader.animate({opacity:1},600);
-        this.$headText.animate({opacity:0},600, function() {
-            $(this).hide();
-        });
+        this.$loader.fadeIn(600);
+        this.$headText.fadeOut();
     }
     else {
-        var self = this;
         this.$headText.stop(true, true);
-        this.$loader.animate({opacity:0},200, function() {
-            $(this).hide();
-            self.$headText.show();
-            self.$headText.animate({opacity:1},200, function() {
-                if(callback)
-                    callback();
-            });
-        });
+        this.$headText.fadeIn(200);
+        this.$loader.fadeOut(200, callback);
     }
-
 };
 
 //show visual feedback on ajax error
@@ -358,20 +331,22 @@ slidingPanel.prototype.showWarning = function(show, message, callback) {
         var detail = message?": " + message:" problem...";
         this.setText("Connection" + detail);
         this.enableToggleButton(false);
-        this.$warning.show();
-        this.$warning.animate({opacity:1},600, function() {
-            if(callback) {
-                calback();
-            }
-        });
+        this.$warning.fadeIn(300, callback);
     }
     else {
-        this.$warning.animate({opacity:0},600,function() {
-            $(this).hide();
-            if(callback) {
-                calback();
-            }
-        });
+        this.$warning.fadeOut(300, callback);
+    }
+};
+
+//show remove filter button
+slidingPanel.prototype.showFilter = function(show, filter, callback) {
+    if(show) {
+        this.$filter.text(filter);
+        this.$clearFilter.fadeIn(200, callback);
+    }
+    else {
+        //$tem.fadeOut(600, callback);
+        this.$clearFilter.fadeOut(200, callback);
     }
 };
 
@@ -424,7 +399,7 @@ function initMap() {
 
 
     google.maps.event.addListener(map, "center_changed", function() {
-        model.showLoadAnimation($gif, $("#map"));
+        model.showLoadAnimation($gif);
     });
 
     //keep map within Helsinki Metropolitan Area

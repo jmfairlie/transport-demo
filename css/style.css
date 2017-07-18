@@ -6,11 +6,9 @@ body, html {
 }
 
 /*prevent text selection in all divs*/
-div {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
+div, span {
     -moz-user-select: none;
+    -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
 }
@@ -37,19 +35,35 @@ div {
 
 .overlay {
     position: absolute;
-    display: none;
+    left:0;
+    top:0;
+    width:100%;
+    height:100%;
+    display: table;
     z-index: 9999;
-    opacity:0;
     pointer-events:none;
-    background: white url("../img/ajax-loader.gif") no-repeat center center;
+    background-color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+}
+
+.overlay > span {
+    display:table-cell;
+    vertical-align: middle;
+    font-size: 5em;
 }
 
 .white-loader {
-    opacity: 0;
+    display:table;
     position: absolute;
     z-index: 10002;
-    background: url("../img/white-loader.gif") no-repeat center center;
-    background-size: contain;
+    text-align: center;
+}
+
+.white-loader > span {
+    display:table-cell;
+    vertical-align: middle;
+    font-size: 3em;
+    color:white;
 }
 
 .timetable {
@@ -96,7 +110,7 @@ div {
 }
 
 .semitransparent {
-    opacity: 0.8;
+    opacity:0.8;
 }
 
 .shadowDown {
@@ -125,7 +139,6 @@ div {
 }
 
 .head-warning {
-    opacity:0;
     display:none;
     padding-right:10px;
     min-width : 8%;
@@ -133,6 +146,37 @@ div {
     vertical-align: middle;
     text-align: right;
     float:right;
+}
+
+.filter-container {
+    display:none;
+    padding-right:10px;
+    min-width : 8%;
+    color: white;
+    vertical-align: middle;
+    float: right;
+    text-align: right;
+}
+
+.filter-text {
+    line-height: inherit;
+    vertical-align: inherit;
+    font-size: inherit;
+    text-align: right;
+    color:gray;
+}
+
+.remove {
+    line-height: inherit;
+    vertical-align: inherit;
+    font-size: inherit;
+    margin-left:10px;
+    text-align: right;
+}
+
+.remove:hover {
+    cursor:pointer;
+    text-shadow: 0 0 20px #fffa98;
 }
 
 #header {
@@ -150,9 +194,30 @@ div {
 
 .fullscreenbutton {
     text-align: center;
-    color:white;
     border-radius: 25%;
     background-color: rgba(0,0,0, 0.8);
+}
+
+
+.fullscreenbutton > span {
+    position: relative;
+    color:white;
+    transition: all 0.2s ease;
+    line-height: inherit;
+}
+
+
+.fullscreenbutton:hover, .fullscreenbutton-touch {
+    text-shadow: 0 0 10px #fffa98;
+    cursor:pointer;
+}
+
+.fullscreenbutton:hover > span {
+    transform: rotate(10deg);
+}
+
+.fullscreenbutton:hover:active > span {
+    top:4px;
 }
 
 #logo {
@@ -162,4 +227,24 @@ div {
 
 .padding-on-top {
     padding-top: 25px;
+}
+
+.panel-button {
+    position: relative;
+    transition: all 0.2s ease;
+    color:white;
+}
+
+.panel-button.disabled {
+    color:rgba(255,255,255,0.3);
+}
+
+.panel-button:hover:not(.disabled), .panel-button-touch:not(.disabled) {
+    top:-1px;
+    text-shadow: 0 0 10px #fffa98;
+    cursor:pointer;
+}
+
+.panel-button:hover:active {
+    top:1px;
 }

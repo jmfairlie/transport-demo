@@ -29,6 +29,13 @@ ko.bindingHandlers.transportIcon = {
             case 4:
             case 5:
             case 8:
+            case 21:
+            case 22:
+            case 23:
+            case 24:
+            case 25:
+            case 36:
+            case 39:
                 iconurl = "img/bus.png";
                 break;
             case 2:
@@ -68,6 +75,18 @@ ko.bindingHandlers.viewportAdjuster = {
     }
 };
 
+/*
+ * Useful extension found in
+ * https://github.com/knockout/knockout/issues/914
+ */
+ko.subscribable.fn.subscribeChanged = function (callback) {
+    var savedValue = this.peek();
+    return this.subscribe(function (latestValue) {
+        var oldValue = savedValue;
+        savedValue = latestValue;
+        callback(latestValue, oldValue);
+    });
+};
 
 var Stop = function(obj, parent) {
     var c = (obj.wgs_coords || obj.coords).split(",");
@@ -129,10 +148,20 @@ var StopsViewModel = function(map) {
 
     self.filter = ko.observable("");
 
+    self.filter.subscribeChanged(function(newValue, oldValue) {
+        if(newValue!==oldValue) {
+            if(newValue.trim().length) {
+                listPanel.showFilter(true, newValue.trim());
+            } else {
+                listPanel.showFilter(false);
+            }
+        }
+    });
+
     self.filteredStops = ko.computed(function() {
-        if(self.filter().length > 0) {
+        if(self.filter().trim().length > 0) {
             return ko.utils.arrayFilter(self.stops(), function(stop) {
-                return (stop.name + stop.codeShort).indexOf(self.filter()) > -1;
+                return (stop.name.toLowerCase() + stop.codeShort).indexOf(self.filter().trim().toLowerCase()) > -1;
             });
         }
         else {
@@ -180,6 +209,7 @@ var StopsViewModel = function(map) {
         var num = newValue.length;
         if(num > 0) {
             listPanel.enableToggleButton(true);
+
         }
         else {
             listPanel.enableToggleButton(false);
@@ -187,7 +217,10 @@ var StopsViewModel = function(map) {
 
         self.updateMarkers(newValue);
         var plural = num==1?"":"s";
-        listPanel.setText(num+" stop"+plural+" found");
+        var numfiltered = self.stops().length - num;
+
+        var filtertext= numfiltered?" ("+numfiltered+" filtered out)":"";
+        listPanel.setText(num+" stop"+plural+" found"+filtertext);
     });
 
     self.updateMarkers = function(newval) {
@@ -281,7 +314,7 @@ var StopsViewModel = function(map) {
             timeout: maxtimeout,
             complete: function(jqXHR, textStatus) {
                 self.hideLoadAnimation($gif);
-                if(textStatus != 'success' && textStatus != 'abort') {
+                if(textStatus !== 'success' && textStatus !== 'abort') {
                     listPanel.showWarning(true, textStatus);
                 }
             }
@@ -376,19 +409,14 @@ var StopsViewModel = function(map) {
             self.markers[stop.id].setAnimation(null);
     };
 
-    self.showLoadAnimation = function(gif, node) {
-        var offset = node.offset();
-        var w = node.outerWidth();
-        var h = node.height();
-        gif.css({top:offset.top, left:offset.left, width:w, height:h});
-        gif.show();
-        gif.animate({opacity:0.7},600);
-
+    self.showLoadAnimation = function(gif) {
+        gif.clearQueue();
+        gif.fadeIn(200);
     }
 
     self.hideLoadAnimation = function (gif) {
         gif.clearQueue();
-        gif.animate({opacity:0}, 'fast', function() {gif.hide();});
+        gif.fadeOut(200);
     };
 
     self.sort = function(a, b) {
