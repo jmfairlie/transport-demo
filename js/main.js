@@ -19,7 +19,6 @@ var isTouchDevice;
 
 //if loading file directly use cors proxy
 var fromfile = window.location.protocol==="file:";
-var cors_proxy = fromfile?"https://crossorigin.me/":"";
 
 $(document).ready(function() {
     isTouchDevice = Modernizr.touch;
@@ -382,7 +381,7 @@ function initMap() {
         streetViewControl: false,
         rotateControl: false,
         scrollwheel: true,
-        minZoom: 16,
+        minZoom: 14,
         maxZoom: 18,
         styles:style
     });

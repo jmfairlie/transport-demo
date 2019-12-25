@@ -1,15 +1,25 @@
-
-/*
- * if you plan to run this on your own server
- * create your own reittiopas account at
- * http://developer.reittiopas.fi/pages/en/account-request.php
- * and replace with your own hash
- */
-
-var hash = "da97842a3c96e80f939e87ee1d7c564378c7906ef241"
-
-var api_base = "https://api.reittiopas.fi/hsl/prod/?userhash="+hash;
+var api_base = "https://api.digitransit.fi/routing/v1/routers/hsl/index/graphql";
 //custom KO bindings
+
+function iconURLByMode(mode) {
+  let iconurl;
+  switch (mode) {
+      case "METRO":
+          iconurl = "img/underground.png";
+          break;
+      case "RAIL":
+          iconurl = "img/train.png";
+          break;
+      case "TRAM":
+        iconurl = "img/tramway.png";
+        break;
+      case "BUS":
+      default:
+          iconurl = "img/bus.png";
+          break;
+  }
+  return iconurl;
+}
 
 //automatically choose the right icon according to transport line type(tram, bus, metro, bus)
 ko.bindingHandlers.transportIcon = {
@@ -21,33 +31,8 @@ ko.bindingHandlers.transportIcon = {
         // This will be called once when the binding is first applied to an element,
         // and again whenever any observables/computeds that are accessed change
         // Update the DOM element based on the supplied values here.
-        var iconurl;
-        var val = parseInt(ko.unwrap(valueAccessor()));
-        switch (val) {
-            case 1:
-            case 3:
-            case 4:
-            case 5:
-            case 8:
-            case 21:
-            case 22:
-            case 23:
-            case 24:
-            case 25:
-            case 36:
-            case 39:
-                iconurl = "img/bus.png";
-                break;
-            case 2:
-                iconurl = "img/tramway.png";
-                break;
-            case 6:
-                iconurl = "img/underground.png";
-                break;
-            case 12:
-                iconurl = "img/train.png";
-                break;
-        }
+        var val =ko.unwrap(valueAccessor());
+        var iconurl = iconURLByMode(val);
         $(element).attr("src", iconurl);
     }
 };
@@ -58,8 +43,10 @@ ko.bindingHandlers.viewportAdjuster = {
 
     },
     update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+
         var $e = $(element);
-        if(ko.unwrap(valueAccessor()).length) {
+        //fix this later
+        /*if(ko.unwrap(valueAccessor()).length) {
             var $selected = $e.find("#"+ko.unwrap(valueAccessor()));
             var offset = 0;
             if($selected.length) {
@@ -71,7 +58,7 @@ ko.bindingHandlers.viewportAdjuster = {
                     $e.animate({scrollTop: offset});
                 }
             }
-        }
+        }*/
     }
 };
 
@@ -89,37 +76,19 @@ ko.subscribable.fn.subscribeChanged = function (callback) {
 };
 
 var Stop = function(obj, parent) {
-    var c = (obj.wgs_coords || obj.coords).split(",");
-    this.id = obj.code;
-    this.codeShort = obj.code_short || obj.codeShort || "n/a";
-    this.name = obj.short_name || obj.name_fi || obj.name;
-    this.latitude = c[1];
-    this.longitude = c[0];
-    this.latlng = new google.maps.LatLng(parseFloat(c[1]), parseFloat(c[0]));
-    this.address = obj.address_fi || obj.address;
-    this.city = obj.city_fi || obj.city;
-    this.url ="#";
+    var c = [obj.lat, obj.lon];
+    this.id = obj.gtfsId;
+    this.codeShort = obj.code;
+    this.name = obj.name;
+    this.latitude = obj.lat;
+    this.longitude = obj.lon;
+    this.latlng = new google.maps.LatLng(obj.lat, obj.lon);
+    this.address = obj.desc;
+    this.city = "?";
+    this.url = obj.url;
     this.fullname = this.name + " ("+this.codeShort+")";
-    this.fulladdress = this.address + ", " + this.city;
-
-    var dep = obj.departures || [];
-    var line_ids = $.map(dep, function(obj) { return obj.code;});
-
-    this.departures = [];
-
-    for(var i = 0, code, t, o; i < line_ids.length; i++) {
-        code = line_ids[i];
-        //times are weirdly specified with this API
-        t = ("0000"+ parseInt(dep[i].time)%2400).slice(-4);
-        o = {
-                id:code,
-                short_id: parent.lineDetails[code].code_short,
-                type: parent.lineDetails[code].transport_type_id,
-                destination: parent.lineDetails[code].line_end,
-                time: t.substring(0,2)+":"+t.substring(2)
-        }
-        this.departures.push(o);
-    }
+    this.fulladdress = this.address;
+    this.mode = obj.vehicleMode;
 
     this.isSelected = function() {
         return (parent.currentStop() == this.id);
@@ -141,6 +110,7 @@ var StopsViewModel = function(map) {
     });
 
     self.markers = {};
+    self.departures = ko.observable([]);
     self.stopDetail = ko.observable();
     self.lines = ko.observable();
     self.currentStop = ko.observable("");
@@ -169,21 +139,40 @@ var StopsViewModel = function(map) {
         }
     });
 
-    this.lineDetails = {};
 
     self.stopDetail.subscribe(function(newValue) {
         if(newValue) {
+            var departures = newValue && newValue.stoptimesForPatterns && newValue.stoptimesForPatterns && newValue.stoptimesForPatterns.reduce((a, o) => [...a, ...o.stoptimes], []) || [];
+            var temp = [];
+            for(var i = 0, code, departure, o; i < departures.length; i++) {
+                departure = departures[i];
+                code = departure.trip.routeShortName;
+
+                o = {
+                        id:code,
+                        short_id: code,
+                        type: departure && departure.trip && departure.trip.route && departure.trip.route.mode || newValue.vehicleMode,
+                        destination: departure.trip.stops.pop().name,
+                        rawTime: departure.scheduledArrival,
+                        time:moment.utc(departure.scheduledArrival*1000).format('HH:mm:ss')
+                }
+                temp.push(o);
+            }
+            self.departures(temp.sort((a,b) => a.rawTime-b.rawTime));
             stopInfoPanel.setText(newValue.fullname);
             stopInfoPanel.showLoader(false, function() {
                 stopInfoPanel.showWarning(false);
                 stopInfoPanel.enableToggleButton(true);
                 stopInfoPanel.toggle();
             });
-        }
-        else {
-            stopInfoPanel.enableToggleButton(false);
-            stopInfoPanel.showHead(false, function() {
-                stopInfoPanel.setText("");
+
+            self.markers[newValue.gtfsId].setIcon(iconURLByMode(newValue.vehicleMode));
+        } else {
+            stopInfoPanel.showLoader(false, function() {
+              stopInfoPanel.enableToggleButton(false);
+              stopInfoPanel.showHead(false, function() {
+                  stopInfoPanel.setText("");
+              });
             });
         }
     });
@@ -193,15 +182,9 @@ var StopsViewModel = function(map) {
         if(newValue.length) {
             self.getStopDetails(newValue);
 
-            $.each(self.markers, function(key, obj) {
-                obj.setIcon("img/busstop_red.png");
-            });
-
-            self.markers[newValue].setIcon("img/busstop_blue.png");
-
-            stopInfoPanel.showHead(true, function() {
-                stopInfoPanel.showLoader(true);
-            });
+            //$.each(self.markers, function(key, obj) {
+                //obj.setIcon(iconURLByMode(obj.mode));
+            //};
         }
     });
 
@@ -242,8 +225,10 @@ var StopsViewModel = function(map) {
         var marker = new google.maps.Marker({
             map: self.map,
             position: stop.latlng,
-            icon: "img/busstop_red.png"
+            icon: iconURLByMode(stop.mode, 'red')
         });
+
+        marker.mode = stop.mode;
 
         self.markers[stop.id] = marker;
 
@@ -281,15 +266,16 @@ var StopsViewModel = function(map) {
         self.currentStop.valueHasMutated();
     };
 
-    self.loadStops = function(data) {
+    self.loadStops = function(response) {
+        const data = response.data;
         var coords, c, val;
         var bounds = map.getBounds();
-        var temp = $.map(data, function(obj) {
+        var temp = $.map(data.stopsByRadius.edges, function(obj) {
             val = null;
-            var c = obj.coords.split(",");
-            coords = new google.maps.LatLng(parseFloat(c[1]), parseFloat(c[0]));
+            var stop = obj.node.stop;
+            coords = new google.maps.LatLng(stop.lat, stop.lon);
             if(bounds.contains(coords)) {
-                val = new Stop(obj, self);
+                val = new Stop(stop, self);
             }
             return val;
         });
@@ -300,18 +286,46 @@ var StopsViewModel = function(map) {
     self.getStops = function() {
         var center = map.getCenter();
         var bounds = map.getBounds();
-        //using CORS proxy to avoid CORS issues.
+
         var distance = Math.floor(google.maps.geometry.spherical.computeDistanceBetween(bounds.getSouthWest(), bounds.getNorthEast()));
-        var url = cors_proxy + api_base+"&request=stops_area&epsg_in=wgs84&epsg_out=wgs84&diameter="+distance+"&limit=2000&center_coordinate=" + center.lng() +","+center.lat();
 
         if(self.mapQuery)
             self.mapQuery.abort();
 
+        var data = {
+          "query":  `{
+            stopsByRadius(lat:${center.lat()}, lon:${center.lng()}, radius:3000) {
+              edges {
+                node {
+                  stop {
+                    gtfsId
+                    name
+                    lat
+                    lon
+                    code
+                    desc
+                    locationType
+                    vehicleType
+                    vehicleMode
+                    platformCode
+                    url
+                    zoneId
+                  }
+                  distance
+                }
+              }
+            }
+          }`
+        }
+
         self.mapQuery = $.ajax({
-            url: url,
+            type: "POST",
+            url: api_base,
             dataType: 'json',
             success: self.loadStops,
             timeout: maxtimeout,
+            contentType: "application/json",
+            data: JSON.stringify(data),
             complete: function(jqXHR, textStatus) {
                 self.hideLoadAnimation($gif);
                 if(textStatus !== 'success' && textStatus !== 'abort') {
@@ -321,82 +335,85 @@ var StopsViewModel = function(map) {
         });
 
         //deselect stop if it's not within bounds
-        if(self.stopDetail() && !(bounds.contains(self.stopDetail().latlng))) {
+        if(self.stopDetail() && self.stopDetail().latlng &&!(bounds.contains(self.stopDetail().latlng))) {
             self.currentStop("");
             self.stopDetail(null);
         }
     };
 
-    self.loadStopDetails = function(datos) {
-        var linerequest = [];
-        var data = datos[0];
-        var lines = data.lines;
-        var a;
-        for(var j=0, max=lines?lines.length:0; j< max; j++) {
-            a = lines[j].split(":");
-
-            if(!(a[0] in self.lineDetails)) {
-                linerequest.push(a[0]);
-            }
-        }
-
-        self.getLines(linerequest.join("|"), data);
+    self.loadStopDetails = function(response) {
+        var details = response && response.data && response.data.stop;
+        self.stopDetail(details);
     };
 
     self.getStopDetails = function(code) {
-        var url = cors_proxy + api_base + "&request=stop&time_limit=360&code="+code;
-
         if(self.detailQuery) {
             self.detailQuery.abort();
             if(self.lineQuery)
                 self.lineQuery.abort();
         }
 
+        stopInfoPanel.showHead(true);
+        stopInfoPanel.showLoader(true);
+
         self.detailQuery = $.ajax({
-            url: url,
+            type: "POST",
+            url: api_base,
             dataType: 'json',
             success: self.loadStopDetails,
+            contentType: "application/json",
+            data: JSON.stringify({
+              "query": `{
+                  stop(id: \"${code}\") {
+                    gtfsId
+                    name
+                    lat
+                    lon
+                    code
+                    desc
+                    locationType
+                    vehicleType
+                    vehicleMode
+                    platformCode
+                    url
+                    zoneId
+                    stoptimesForPatterns(timeRange: 1800, omitNonPickups: true) {
+                      stoptimes {
+                        scheduledArrival
+                        realtimeArrival
+                        arrivalDelay
+                        realtime
+                        headsign
+                        trip {
+                          gtfsId
+                          routeShortName
+                          tripGeometry {
+                            length
+                            points
+                          }
+                          stops {
+                            gtfsId
+                            name
+                            code
+                            desc
+                            zoneId
+                            url
+                          }
+                        }
+                      }
+                    }
+                  }
+              }`
+            }),
             //don't cache this requests cause we need up to date info
             cache:false,
             timeout: maxtimeout,
             complete: function(jqXHR, textStatus) {
                 if(textStatus != "success" && textStatus != 'abort') {
-                    stopInfoPanel.showWarning(true, textStatus);
-                    stopInfoPanel.showLoader(false);
+                    stopInfoPanel.showLoader(false, _ => stopInfoPanel.showWarning(true, textStatus))
                 }
             }
         });
-    };
-
-    self.loadLines = function(data) {
-        for(var i = 0; i< data.length; i++)
-        {
-            self.lineDetails[data[i].code] = data[i];
-        }
-    };
-
-    self.getLines = function(line_ids, stop) {
-        if(line_ids.length) {
-            var url = cors_proxy + api_base + "&request=lines&query="+line_ids;
-            self.lineQuery = $.ajax({
-                url: url,
-                dataType: 'json',
-                success: function (data) {
-                    self.loadLines(data);
-                },
-                timeout: maxtimeout,
-                complete: function(jqXHR, textStatus) {
-                    if(textStatus == 'success') {
-                        self.stopDetail(new Stop(stop, self));
-                    } else if(textStatus != 'abort') {
-                        stopInfoPanel.showWarning(true, textStatus);
-                        stopInfoPanel.showLoader(false);
-                    }
-                }
-            });
-        } else {
-            self.stopDetail(new Stop(stop, self));
-        }
     };
 
     self.listMouseOver = function(stop) {
