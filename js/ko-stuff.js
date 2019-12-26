@@ -395,7 +395,7 @@ var StopsViewModel = function(map) {
                     platformCode
                     url
                     zoneId
-                    stoptimesForPatterns(timeRange: 1800, omitNonPickups: true) {
+                    stoptimesForPatterns(timeRange: 3600, omitNonPickups: true) {
                       stoptimes {
                         scheduledArrival
                         realtimeArrival
