@@ -333,6 +333,7 @@ slidingPanel.prototype.showWarning = function(show, message, callback) {
         this.$warning.fadeIn(300, callback);
     }
     else {
+        this.setText("");
         this.$warning.fadeOut(300, callback);
     }
 };

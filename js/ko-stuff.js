@@ -1,21 +1,25 @@
 var api_base = "https://api.digitransit.fi/routing/v1/routers/hsl/index/graphql";
 //custom KO bindings
 
-function iconURLByMode(mode) {
+function iconURLByMode(mode, selected) {
+  var prefix = selected?"selected_":"";
   let iconurl;
   switch (mode) {
-      case "METRO":
-          iconurl = "img/underground.png";
+      case "SUBWAY":
+          iconurl = "img/"+prefix+"underground.png";
           break;
       case "RAIL":
-          iconurl = "img/train.png";
+          iconurl = "img/"+prefix+"train.png";
           break;
       case "TRAM":
-        iconurl = "img/tramway.png";
+        iconurl = "img/"+prefix+"tramway.png";
+        break;
+      case "FERRY":
+        iconurl = "img/"+prefix+"ferry.png";
         break;
       case "BUS":
       default:
-          iconurl = "img/bus.png";
+          iconurl = "img/"+prefix+"bus.png";
           break;
   }
   return iconurl;
@@ -115,6 +119,7 @@ var StopsViewModel = function(map) {
     self.lines = ko.observable();
     self.currentStop = ko.observable("");
     self.stops =  ko.observableArray([]);
+    self.prevStop = null;
 
     self.filter = ko.observable("");
 
@@ -166,7 +171,17 @@ var StopsViewModel = function(map) {
                 stopInfoPanel.toggle();
             });
 
-            self.markers[newValue.gtfsId].setIcon(iconURLByMode(newValue.vehicleMode));
+            if(self.prevStop) {
+              const prevMarker = self.markers[self.prevStop];
+              if(prevMarker) {
+                const mode = prevMarker.mode;
+                if(mode) {
+                  prevMarker.setIcon(iconURLByMode(mode));
+                }
+              }
+            }
+            self.markers[newValue.gtfsId].setIcon(iconURLByMode(newValue.vehicleMode, true));
+            self.markers[newValue.gtfsId].setZIndex(Date.now());
         } else {
             stopInfoPanel.showLoader(false, function() {
               stopInfoPanel.enableToggleButton(false);
@@ -225,7 +240,9 @@ var StopsViewModel = function(map) {
         var marker = new google.maps.Marker({
             map: self.map,
             position: stop.latlng,
-            icon: iconURLByMode(stop.mode, 'red')
+            icon: iconURLByMode(stop.mode),
+            zIndex: 0,
+            optimized: false
         });
 
         marker.mode = stop.mode;
@@ -244,6 +261,7 @@ var StopsViewModel = function(map) {
         });
 
         google.maps.event.addListener(marker, 'click', function() {
+            self.prevStop = self.currentStop();
             self.currentStop(stop.id);
         });
     };
