@@ -91,7 +91,7 @@ div, span {
 .whatever {
     box-sizing: border-box;
     height:100%;
-    overflow: hidden;
+    overflow: auto;
     max-width: 450px;
     margin: 0 auto;
     background-color: rgba(255,255,255,0.8);
@@ -111,6 +111,10 @@ div, span {
 
 .semitransparent {
     opacity:0.8;
+}
+
+.panel-header {
+  overflow:hidden;
 }
 
 .shadowDown {
@@ -136,6 +140,10 @@ div, span {
     color: white;
     vertical-align: middle;
     text-align: center;
+}
+
+.headText::before {
+  content: "\00a0\00a0\00a0";
 }
 
 .head-warning {
@@ -179,6 +187,9 @@ div, span {
     text-shadow: 0 0 20px #fffa98;
 }
 
+.panel-head {
+}
+
 #header {
     box-sizing: border-box;
     height: 10%;
@@ -189,6 +200,31 @@ div, span {
     font-size: 4vh;
     border-bottom: 2px solid #00a9ff;
     color: white;
+    overflow: hidden;
+}
+
+#header > span.title {
+  vertical-align:middle;
+}
+
+
+#header > a > .github {
+
+  cursor: pointer;
+  position: absolute;
+  right: 0;
+  top:0;
+  width: 10vh;
+  background-image: url(../img/github.svg);
+  background-size: 40%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+#header > a > .github::before {
+  content: "";
+  display: block;
+  padding-top: calc(100% - 2px);
 }
 
 
@@ -233,6 +269,7 @@ div, span {
     position: relative;
     transition: all 0.2s ease;
     color:white;
+    padding: 0 10px;
 }
 
 .panel-button.disabled {

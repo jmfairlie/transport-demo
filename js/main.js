@@ -21,16 +21,21 @@ var isTouchDevice;
 var fromfile = window.location.protocol==="file:";
 
 $(document).ready(function() {
+    window.setTimeout(function() {
+      var button = document.querySelector(".dismissButton");
+      button && button.click();
+    }, 1000);
+
     isTouchDevice = Modernizr.touch;
 //create the html nodes associated to the map loading gif
     $gif  =$("<div>").addClass("overlay").append($("<span>").addClass("fa fa-spinner fa-pulse")).appendTo("#static");
 //create sliding panels
-    listPanel = new slidingPanel("#listblock", false, "shadowDown reddish semitransparent", "#static", false, function(e) {
+    listPanel = new slidingPanel("#listblock", false, "panel-header shadowDown reddish semitransparent", "#static", false, function(e) {
         model.filter("");
         //$("#listblock #search").val("");
         e.stopPropagation();
     });
-    stopInfoPanel = new slidingPanel("#stop-details", true, "shadowUp blueish semitransparent", "#static", true);
+    stopInfoPanel = new slidingPanel("#stop-details", true, "panel-header shadowUp blueish semitransparent", "#static", true);
     button = new fullscreenButton("#static", function(fullscreen) {
         if(fullscreen) {
             $("#header").hide();
@@ -79,14 +84,14 @@ var fullscreenButton = function(container, callback) {
 
 fullscreenButton.prototype.resize = function() {
 
-    this.dimension = this.container.height()/10;
+    this.dimension = this.container.height()/15;
 
     this.button.css('font-size', this.dimension*2/4);
     this.button.css('line-height', this.dimension + "px");
 
     this.button.offset({
-        top: this.container.offset().top + this.dimension*1.5,
-        left: this.container.offset().left + this.dimension*0.5
+        top: this.container.offset().top + this.dimension*2.0,
+        left: this.container.offset().left + this.dimension*0.4
     });
 
     this.button.height(this.dimension);
@@ -149,7 +154,7 @@ fullscreenButton.prototype.toggleFullScreen = function() {
 
     var direction = down?"up":"down";
 
-    this.$button = $("<span class='panel-button disabled'>").addClass("glyphicon glyphicon-collapse-" + direction+ " headText");
+    this.$button = $("<span class='panel-button disabled'>").addClass("glyphicon glyphicon-collapse-" + direction);
     this.$headText =  $("<span>").addClass("headText");
     this.$warning = $("<span>").addClass("head-warning glyphicon glyphicon-exclamation-sign");
 
@@ -381,10 +386,13 @@ function initMap() {
         scaleControl: false,
         streetViewControl: false,
         rotateControl: false,
+        fullscreenControl: false,
         scrollwheel: true,
         minZoom: 14,
         maxZoom: 18,
-        styles:style
+        styles:style,
+        gestureHandling: 'greedy',
+        clickableIcons: false
     });
 
 

@@ -164,9 +164,8 @@ var StopsViewModel = function(map) {
                 temp.push(o);
             }
             self.departures(temp.sort((a,b) => a.rawTime-b.rawTime));
-            stopInfoPanel.setText(newValue.fullname);
+            stopInfoPanel.setText(newValue.name + " (" + newValue.code + ")");
             stopInfoPanel.showLoader(false, function() {
-                stopInfoPanel.showWarning(false);
                 stopInfoPanel.enableToggleButton(true);
                 stopInfoPanel.toggle();
             });
